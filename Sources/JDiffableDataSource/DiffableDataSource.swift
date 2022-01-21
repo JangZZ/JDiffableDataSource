@@ -33,6 +33,8 @@ open class JTableViewDiffableDataSource<Section: JSectiontable> {
             guard let self = self else { return .init() }
             return cellProvider(tbv, idx, self._store[id])
         }
+
+        self.setupDataSource()
     }
 }
 
@@ -136,6 +138,15 @@ extension JTableViewDiffableDataSource {
                 }
                 .store(in: &_cancellables)
         }
+    }
+}
+
+extension JTableViewDiffableDataSource {
+
+    ///  Use this computed variables when your tableview have multiple sections
+    public var sections: [Section] {
+        get { _store.sections }
+        set { _store.update(newValue) }
     }
 }
 
