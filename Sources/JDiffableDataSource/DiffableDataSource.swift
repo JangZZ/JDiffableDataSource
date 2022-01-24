@@ -18,10 +18,7 @@ public final class JTableViewDiffableDataSource<I: JItemable> {
     private var _dataSource: JDataSource<I>!
     private var _store = JStore<I>()
     private var _cancellables = Set<AnyCancellable>()
-
-    var snapshotPublisher: SnapshotPublisher {
-        return .init(store: _store)
-    }
+    private lazy var snapshotPublisher: SnapshotPublisher = .init(store: _store)
 
     // MARK: - Initializer
     public init(
@@ -39,8 +36,21 @@ public final class JTableViewDiffableDataSource<I: JItemable> {
 }
 
 extension JTableViewDiffableDataSource {
+    /// The func provide title header for section`
+    ///  default title header using computed `titleHeader` properties of types was conform  `JSectionable`
+    /// - Parameter toTitleSection: a closure require return string for each section number
+    /// - Returns: current instance of datasource
     public func titleSection(_ toTitleSection: @escaping TitleHeaderSection) -> Self {
         _dataSource.titleHeaderSection = toTitleSection
+        return self
+    }
+
+    /// The func provide the row animation for the dataSource
+    ///  By default animation is `.automatic`
+    /// - Parameter animation: a row animation for the tableview
+    /// - Returns: current instance of datasource
+    public func rowAnimation(_ animation: UITableView.RowAnimation) -> Self {
+        _dataSource.defaultRowAnimation = animation
         return self
     }
 }

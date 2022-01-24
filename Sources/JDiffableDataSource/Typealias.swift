@@ -8,4 +8,4 @@
 import Foundation
 
 public typealias JItemable = Identifiable & Hashable
-public typealias TitleHeaderSection = ((Int) -> String?) 
+public typealias TitleHeaderSection = ((Int) -> String?)
