@@ -100,11 +100,14 @@ public extension JTableViewDiffableDataSource {
             .sink { [weak self] snapshot in
                 guard let self = self else { return }
 
-                if #available(iOS 15.0, *) {
-                    self._dataSource.applySnapshotUsingReloadData(snapshot)
-                } else {
+                #if compiler(>=5.5)
+                    if #available(iOS 15.0, *) {
+                        self._dataSource.applySnapshotUsingReloadData(snapshot)
+                    }
+                #else
                     self._dataSource.apply(snapshot, animatingDifferences: false)
-                }
+                #endif
+
             }
             .store(in: &_cancellables)
 

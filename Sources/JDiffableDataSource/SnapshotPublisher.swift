@@ -66,11 +66,13 @@ extension JTableViewDiffableDataSource {
 
         private func reloadItemIfNeeded(_ snapshot: inout Snapshot, with newSections: [AnySection<I>]) {
             if !store.needReloadIDs.isEmpty {
-                if #available(iOS 15.0, *) {
-                    snapshot.reconfigureItems(store.needReloadIDs)
-                } else {
+                #if compiler(>=5.5)
+                    if #available(iOS 15.0, *) {
+                        snapshot.reconfigureItems(store.needReloadIDs)
+                    }
+                #else
                     snapshot.reloadItems(store.needReloadIDs)
-                }
+                #endif
             }
         }
 
