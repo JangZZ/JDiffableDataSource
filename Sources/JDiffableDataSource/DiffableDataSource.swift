@@ -31,7 +31,7 @@ public final class JTableViewDiffableDataSource<I: JItemable> {
                 return cellProvider(tbv, idx, self._store[id])
         }
 
-        self.setupDataSource()
+        self.observeSnapshotPublisher()
     }
 }
 
@@ -94,7 +94,7 @@ extension JTableViewDiffableDataSource {
 // MARK: - Observer State
 public extension JTableViewDiffableDataSource {
 
-    private func setupDataSource() {
+    private func observeSnapshotPublisher() {
         snapshotPublisher
             .prefix(1)
             .sink { [weak self] snapshot in

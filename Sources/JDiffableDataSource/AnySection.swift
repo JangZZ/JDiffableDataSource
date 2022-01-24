@@ -11,20 +11,27 @@ import Foundation
 
 /// This struct provide type erasure for a concrete section type conform JSectiontable
 public struct AnySection<I: JItemable>: JSectiontable {
+
+    private let _items: [I]
+    private let _id: String
+    private let _titleHeader: String
+
     public var items: [I] {
         return _items
     }
 
-    let _items: [I]
-    let _id: String
-
     public var ID: String {
-        _id
+        return _id
+    }
+
+    public var titleHeader: String {
+        return _titleHeader
     }
 
     public init<S: JSectiontable>(_ section: S) where I == S.Item {
         self._items = section.items
         self._id = section.ID
+        self._titleHeader = section.titleHeader
     }
 }
 
