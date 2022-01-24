@@ -53,3 +53,19 @@ public class JStore<S: JSectiontable> {
         }
     }
 }
+
+// MARK: - Default Section
+enum DefaultSection<I: JItemable>: JSectiontable {
+    case main(items: [I])
+
+    var ID: String {
+        return .JConstant.defaultSectionID
+    }
+
+    var items: [I] {
+        if case let .main(items) = self {
+            return items
+        }
+        return []
+    }
+}

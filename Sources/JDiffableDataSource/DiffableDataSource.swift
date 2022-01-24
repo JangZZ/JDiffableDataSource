@@ -8,14 +8,14 @@
 import UIKit
 import Combine
 
-open class JTableViewDiffableDataSource<Section: JSectiontable> {
+public final class JTableViewDiffableDataSource<Section: JSectiontable> {
 
     // MARK: - Typealias
     public typealias CellProvider = (UITableView, IndexPath, Section.Item) -> UITableViewCell
     public typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Section.Item.ID>
 
     // MARK: - Private Properties
-    private var _dataSource: UITableViewDiffableDataSource<Section, Section.Item.ID>!
+    private var _dataSource: JDataSource<Section>!
     private var _store = JStore<Section>()
     private var _cancellables = Set<AnyCancellable>()
 
@@ -24,11 +24,11 @@ open class JTableViewDiffableDataSource<Section: JSectiontable> {
     }
 
     // MARK: - Initializer
-    init(
+    public init(
         tableView: UITableView,
         cellProvider: @escaping (UITableView, IndexPath, Section.Item) -> UITableViewCell
     ) {
-        self._dataSource = UITableViewDiffableDataSource<Section, Section.Item.ID>(
+        self._dataSource = JDataSource<Section>(
             tableView: tableView) { [weak self] tbv, idx, id in
             guard let self = self else { return .init() }
             return cellProvider(tbv, idx, self._store[id])
@@ -37,6 +37,23 @@ open class JTableViewDiffableDataSource<Section: JSectiontable> {
         self.setupDataSource()
     }
 }
+
+extension JTableViewDiffableDataSource {
+    public func titleSection(_ toTitleSection: @escaping TitleHeaderSection) -> Self {
+        _dataSource.titleHeaderSection = toTitleSection
+        return self
+    }
+}
+
+public class JDataSource<S: JSectiontable>: UITableViewDiffableDataSource<S, S.Item.ID> {
+
+    var titleHeaderSection: TitleHeaderSection? = nil
+
+    public override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        return titleHeaderSection?(section)
+    }
+}
+
 
 // MARK: - SnapshotPublisher
 extension JTableViewDiffableDataSource {
@@ -77,16 +94,7 @@ extension JTableViewDiffableDataSource {
             self.observeStore()
         }
 
-        public func request(_ demand: Subscribers.Demand) {
-            if let snapshot = _currentSnapshot {
-                _ = _subscriber?.receive(snapshot)
-            }
-            else {
-                _ = _subscriber?.receive(
-                    createSnapshot(with: store.sections)
-                )
-            }
-        }
+        public func request(_ demand: Subscribers.Demand) {}
 
         public func cancel() {
             _currentSnapshot = nil
@@ -96,9 +104,9 @@ extension JTableViewDiffableDataSource {
 
         private func createSnapshot(with sections: [Section]) -> Snapshot {
             var snapshot = Snapshot()
-            snapshot.appendSections(sections)
             sections.forEach { section in
                 let allIDs = section.items.map(\.id)
+                snapshot.appendSections([section])
                 snapshot.appendItems(allIDs, toSection: section)
             }
 
@@ -106,10 +114,11 @@ extension JTableViewDiffableDataSource {
         }
 
         private func update(_ snapshot: inout Snapshot, with newSections: [Section]) {
-            snapshot.appendSections(newSections)
-
             newSections.forEach { section in
                 let allIDs = section.items.map(\.id)
+                if !snapshot.sectionIdentifiers.contains(section) {
+                    snapshot.appendSections([section])
+                }
                 snapshot.appendItems(allIDs, toSection: section)
             }
 
@@ -141,6 +150,7 @@ extension JTableViewDiffableDataSource {
     }
 }
 
+// MARK: - Computed Properties
 extension JTableViewDiffableDataSource {
 
     ///  Use this computed variables when your tableview have multiple sections
@@ -148,14 +158,6 @@ extension JTableViewDiffableDataSource {
         get { _store.sections }
         set { _store.update(newValue) }
     }
-}
-
-// MARK: - Sectionable {
-public protocol JSectiontable: Hashable {
-    associatedtype Item: Identifiable & Hashable
-
-    var items: [Item] { get }
-    var titleHeader: String { get }
 }
 
 // MARK: - Observer State
