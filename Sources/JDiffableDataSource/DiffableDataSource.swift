@@ -8,15 +8,15 @@
 import UIKit
 import Combine
 
-public final class JTableViewDiffableDataSource<Section: JSectiontable> {
+public final class JTableViewDiffableDataSource<I: JItemable> {
 
     // MARK: - Typealias
-    public typealias CellProvider = (UITableView, IndexPath, Section.Item) -> UITableViewCell
-    public typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Section.Item.ID>
+    public typealias CellProvider = (UITableView, IndexPath, I) -> UITableViewCell
+    public typealias Snapshot = NSDiffableDataSourceSnapshot<AnySection<I>, I.ID>
 
     // MARK: - Private Properties
-    private var _dataSource: JDataSource<Section>!
-    private var _store = JStore<Section>()
+    private var _dataSource: JDataSource<I>!
+    private var _store = JStore<I>()
     private var _cancellables = Set<AnyCancellable>()
 
     var snapshotPublisher: SnapshotPublisher {
@@ -26,12 +26,12 @@ public final class JTableViewDiffableDataSource<Section: JSectiontable> {
     // MARK: - Initializer
     public init(
         tableView: UITableView,
-        cellProvider: @escaping (UITableView, IndexPath, Section.Item) -> UITableViewCell
+        cellProvider: @escaping (UITableView, IndexPath, I) -> UITableViewCell
     ) {
-        self._dataSource = JDataSource<Section>(
+        self._dataSource = JDataSource<I>(
             tableView: tableView) { [weak self] tbv, idx, id in
             guard let self = self else { return .init() }
-            return cellProvider(tbv, idx, self._store[id])
+                return cellProvider(tbv, idx, self._store[id])
         }
 
         self.setupDataSource()
@@ -45,7 +45,7 @@ extension JTableViewDiffableDataSource {
     }
 }
 
-public class JDataSource<S: JSectiontable>: UITableViewDiffableDataSource<S, S.Item.ID> {
+public class JDataSource<I: JItemable>: UITableViewDiffableDataSource<AnySection<I>, I.ID> {
 
     var titleHeaderSection: TitleHeaderSection? = nil
 
@@ -57,8 +57,7 @@ public class JDataSource<S: JSectiontable>: UITableViewDiffableDataSource<S, S.I
 // MARK: - Computed Properties
 extension JTableViewDiffableDataSource {
 
-    ///  Use this computed variables when your tableview have multiple sections
-    public var sections: [Section] {
+    private var _sections: [AnySection<I>] {
         get { _store.sections }
         set {
             // Update title header for datasource
@@ -67,6 +66,18 @@ extension JTableViewDiffableDataSource {
             // store new value
             _store.update(newValue)
         }
+    }
+
+    ///  Use this func when your tableview have multiple sections
+    public func update<S: JSectiontable>(_ sections: [S]) where I == S.Item {
+        self._sections = sections.map(AnySection.init)
+    }
+
+    ///  Use this func when your tableview have single sections
+    ///  This func will define default section, just assign items to params only
+    public func update(_ items: [I]) {
+        let defaultSection = DefaultSection.main(items: items)
+        self._sections = [AnySection<I>(defaultSection)]
     }
 }
 

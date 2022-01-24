@@ -7,20 +7,20 @@
 
 import Foundation
 
-public class JStore<S: JSectiontable> {
+public class JStore<I: JItemable> {
 
-    typealias ID = S.Item.ID
+    typealias ID = I.ID
 
     // MARK: - Private Properties
-    @Published private(set) var sections: [S] = []
-    private(set) var allItems: Set<S.Item> = []
+    @Published private(set) var sections: [AnySection<I>] = []
+    private(set) var allItems: Set<I> = []
     private(set) var allIDs: [ID] = []
     private(set) var needReloadIDs: [ID] = []
 
     // MARK: - Properties
-    func update(_ newSections: [S]) {
+    func update(_ newSections: [AnySection<I>]) {
         let oldItems = self.allItems
-        let newItems = Set<S.Item>(newSections.flatMap(\.items))
+        let newItems = Set<I>(newSections.flatMap(\.items))
 
         needReloadIDs = Array(
             newItems.subtracting(oldItems)
@@ -33,7 +33,7 @@ public class JStore<S: JSectiontable> {
         sections = newSections
     }
 
-    subscript(id: ID) -> S.Item {
+    subscript(id: ID) -> I {
         get {
             precondition(
                 self.allItems.first { $0.id == id } != nil,
@@ -51,21 +51,5 @@ public class JStore<S: JSectiontable> {
                 allItems.insert(newValue)
             }
         }
-    }
-}
-
-// MARK: - Default Section
-enum DefaultSection<I: JItemable>: JSectiontable {
-    case main(items: [I])
-
-    var ID: String {
-        return .JConstant.defaultSectionID
-    }
-
-    var items: [I] {
-        if case let .main(items) = self {
-            return items
-        }
-        return []
     }
 }

@@ -15,9 +15,9 @@ extension JTableViewDiffableDataSource {
 
         public typealias Output = Snapshot
         public typealias Failure = Never
-        private let store: JStore<Section>
+        private let store: JStore<I>
 
-        init(store: JStore<Section>) {
+        init(store: JStore<I>) {
             self.store = store
         }
 
@@ -36,11 +36,11 @@ extension JTableViewDiffableDataSource {
     where SB.Input == Snapshot, SB.Failure == Never {
 
         // MARK: - Properties
-        private let store: JStore<Section>
+        private let store: JStore<I>
         private var _subscriber: SB?
         private var _cancellables = Set<AnyCancellable>()
 
-        init(store: JStore<Section>, subscriber: SB) {
+        init(store: JStore<I>, subscriber: SB) {
             self.store = store
             self._subscriber = subscriber
             self.observeStore()
@@ -53,7 +53,7 @@ extension JTableViewDiffableDataSource {
             _cancellables.removeAll()
         }
 
-        private func createSnapshot(with sections: [Section]) -> Snapshot {
+        private func createSnapshot(with sections: [AnySection<I>]) -> Snapshot {
             var snapshot = Snapshot()
             sections.forEach { section in
                 let allIDs = section.items.map(\.id)
@@ -64,7 +64,7 @@ extension JTableViewDiffableDataSource {
             return snapshot
         }
 
-        private func reloadItemIfNeeded(_ snapshot: inout Snapshot, with newSections: [Section]) {
+        private func reloadItemIfNeeded(_ snapshot: inout Snapshot, with newSections: [AnySection<I>]) {
             if !store.needReloadIDs.isEmpty {
                 if #available(iOS 15.0, *) {
                     snapshot.reconfigureItems(store.needReloadIDs)
