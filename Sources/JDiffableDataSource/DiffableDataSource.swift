@@ -54,109 +54,19 @@ public class JDataSource<S: JSectiontable>: UITableViewDiffableDataSource<S, S.I
     }
 }
 
-
-// MARK: - SnapshotPublisher
-extension JTableViewDiffableDataSource {
-
-    public struct SnapshotPublisher: Combine.Publisher {
-
-        public typealias Output = Snapshot
-        public typealias Failure = Never
-        private let store: JStore<Section>
-
-        init(store: JStore<Section>) {
-            self.store = store
-        }
-
-        public func receive<SB>(
-            subscriber: SB
-        ) where SB: Subscriber,
-                Self.Failure == SB.Failure,
-                Self.Output == SB.Input
-        {
-            let subscription = Subscription(store: store, subscriber: subscriber)
-            subscriber.receive(subscription: subscription)
-        }
-    }
-
-    private class Subscription<SB: Subscriber>: Combine.Subscription
-    where SB.Input == Snapshot, SB.Failure == Never {
-
-        // MARK: - Properties
-        private let store: JStore<Section>
-        private var _subscriber: SB?
-        private var _currentSnapshot: Snapshot?
-        private var _cancellables = Set<AnyCancellable>()
-
-        init(store: JStore<Section>, subscriber: SB) {
-            self.store = store
-            self._subscriber = subscriber
-            self.observeStore()
-        }
-
-        public func request(_ demand: Subscribers.Demand) {}
-
-        public func cancel() {
-            _currentSnapshot = nil
-            _subscriber = nil
-            _cancellables.removeAll()
-        }
-
-        private func createSnapshot(with sections: [Section]) -> Snapshot {
-            var snapshot = Snapshot()
-            sections.forEach { section in
-                let allIDs = section.items.map(\.id)
-                snapshot.appendSections([section])
-                snapshot.appendItems(allIDs, toSection: section)
-            }
-
-            return snapshot
-        }
-
-        private func update(_ snapshot: inout Snapshot, with newSections: [Section]) {
-            newSections.forEach { section in
-                let allIDs = section.items.map(\.id)
-                if !snapshot.sectionIdentifiers.contains(section) {
-                    snapshot.appendSections([section])
-                }
-                snapshot.appendItems(allIDs, toSection: section)
-            }
-
-            if !store.needReloadIDs.isEmpty {
-                if #available(iOS 15.0, *) {
-                    snapshot.reconfigureItems(store.needReloadIDs)
-                } else {
-                    snapshot.reloadItems(store.needReloadIDs)
-                }
-            }
-        }
-
-        private func observeStore() {
-            store.$sections
-                .sink { [weak self] newSection in
-                    guard let self = self else { return }
-                    if var currentSnapshot = self._currentSnapshot {
-                        self.update(&currentSnapshot, with: newSection)
-                        self._currentSnapshot = currentSnapshot
-                    }
-                    else {
-                        self._currentSnapshot = self.createSnapshot(with: newSection)
-                    }
-
-                    let _ = self._subscriber?.receive(self._currentSnapshot!)
-                }
-                .store(in: &_cancellables)
-        }
-    }
-}
-
 // MARK: - Computed Properties
 extension JTableViewDiffableDataSource {
 
     ///  Use this computed variables when your tableview have multiple sections
     public var sections: [Section] {
         get { _store.sections }
-        set { _store.update(newValue) }
+        set {
+            // Update title header for datasource
+            _dataSource.titleHeaderSection = newValue.toTitleHeader
+
+            // store new value
+            _store.update(newValue)
+        }
     }
 }
 

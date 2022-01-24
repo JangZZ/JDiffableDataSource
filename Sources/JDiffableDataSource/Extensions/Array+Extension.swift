@@ -21,3 +21,14 @@ extension Array {
         }
     }
 }
+
+extension Array where Element: JSectiontable {
+    var toTitleHeader: TitleHeaderSection {
+        return { index -> String? in
+            if let section = self[_safe: index] {
+                return section.titleHeader
+            }
+            return nil
+        }
+    }
+}
