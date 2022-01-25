@@ -33,6 +33,14 @@ public struct AnySection<I: JItemable>: JSectiontable {
         self._id = section.ID
         self._titleHeader = section.titleHeader
     }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(ID)
+    }
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.ID == rhs.ID
+    }
 }
 
 // MARK: - Default Section
@@ -48,5 +56,13 @@ enum DefaultSection<I: JItemable>: JSectiontable {
             return items
         }
         return []
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(ID)
+    }
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.ID == rhs.ID
     }
 }

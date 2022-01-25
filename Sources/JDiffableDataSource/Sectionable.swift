@@ -25,12 +25,4 @@ public extension JSectiontable {
     /// Default implement for title header because some time
     /// Section will not have the header tile
     var titleHeader: String { return .JConstant.empty }
-
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(ID)
-    }
-
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        return lhs.ID == rhs.ID
-    }
 }
