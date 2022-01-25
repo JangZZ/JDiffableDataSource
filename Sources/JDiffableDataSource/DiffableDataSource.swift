@@ -36,6 +36,26 @@ public final class JTableViewDiffableDataSource<I: JItemable> {
 }
 
 extension JTableViewDiffableDataSource {
+
+    /// Returns an identifier for the item at the specified index path in the table view.
+    /// This method is a constant time operation, O(1), which means you can look up an index path from its corresponding item identifier with no significant overhead.
+    /// - Parameter indexPath: The index path of the item in the table view.
+    /// - Returns: he item’s identifier, or nil if no item is found at the provided index path.
+    public func itemIdentifier(for indexPath: IndexPath) -> I? {
+        guard let id = _dataSource.itemIdentifier(for: indexPath)
+        else { return nil }
+
+        return self._store[id]
+    }
+
+    /// Returns an index path for the item with the specified identifier in the table view.
+    /// This method is a constant time operation, O(1), which means you can look up an index path from its corresponding item identifier with no significant overhead.
+    /// - Parameter itemIdentifier: The identifier of the item in the table view.
+    /// - Returns: The item’s index path, or nil if no item is found with the provided item identifier.
+    public func indexPath(for itemIdentifier: I) -> IndexPath? {
+        return _dataSource.indexPath(for: itemIdentifier.id)
+    }
+
     /// The func provide title header for section`
     ///  default title header using computed `titleHeader` properties of types was conform  `JSectionable`
     /// - Parameter toTitleSection: a closure require return string for each section number
